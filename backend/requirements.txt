@@ -1,0 +1,13 @@
+Flask
+Flask-Cors
+PyMuPDF
+pytesseract
+Pillow
+ollama
+langchain
+sentence-transformers
+faiss-cpu
+numpy
+transformers
+torch
+openai-whisper

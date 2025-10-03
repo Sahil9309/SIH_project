@@ -1,0 +1,134 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import os
+import fitz
+import pytesseract
+from PIL import Image
+import io
+import ollama
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+
+# Initialize Flask App
+app = Flask(__name__)
+CORS(app)  # Enable Cross-Origin Resource Sharing
+
+# --- Your Existing RAG System Code (Refactored) ---
+
+def get_text_from_pdf(file_path, langs=['eng', 'hin', 'ben', 'chi_sim']):
+    # ... (copy the function from your final.ipynb)
+    content = ""
+    pdf_doc = fitz.open(file_path)
+    for pg in pdf_doc:
+        pg_text = pg.get_text()
+        if pg_text.strip():
+            content += pg_text
+        else:
+            img_data = pg.get_pixmap()
+            img = Image.open(io.BytesIO(img_data.tobytes()))
+            for lang in langs:
+                try:
+                    content += pytesseract.image_to_string(img, lang=lang)
+                    break
+                except:
+                    continue
+    return content
+
+
+def split_text_into_chunks(text_data):
+    # ... (copy the function from your final.ipynb)
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+        separators=["\n\n", "\n", "।", "。", "؟", "!", "?"]
+    )
+    return splitter.split_text(text_data)
+
+embedding_model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+
+def build_vector_index(text_chunks):
+    # ... (copy the function from your final.ipynb)
+    embeddings = embedding_model.encode(text_chunks)
+    dim = embeddings.shape[1]
+    vector_index = faiss.IndexFlatL2(dim)
+    vector_index.add(embeddings)
+    return vector_index, embeddings
+
+class DocumentQASystem:
+    # ... (copy the class from your final.ipynb)
+    def __init__(self, vector_index, text_chunks):
+        self.vector_index = vector_index
+        self.text_chunks = text_chunks
+
+    def generate_detailed_response(self, context, query):
+        prompt = f"Query: {query}\nContext: {context}\n\nResponse:"
+        response = ollama.generate(
+            model='llama3',
+            prompt=prompt,
+        )
+        return response['response']
+
+    def get_answer(self, query, top_k=5):
+        query_embed = embedding_model.encode([query])
+        _, closest_indices = self.vector_index.search(query_embed, top_k)
+        relevant_text = "\n\n".join([self.text_chunks[idx] for idx in closest_indices[0]])
+        return self.generate_detailed_response(relevant_text, query)
+
+# --- Global variables to hold the QA system ---
+qa_system = None
+text_chunks = []
+
+# --- API Endpoints ---
+@app.route('/upload', methods=['POST'])
+def upload_files():
+    global qa_system, text_chunks
+    if 'files' not in request.files:
+        return jsonify({'error': 'No files part in the request'}), 400
+
+    files = request.files.getlist('files')
+    pdf_paths = []
+    # Create a directory for uploads if it doesn't exist
+    if not os.path.exists("data"):
+        os.makedirs("data")
+
+    for file in files:
+        if file.filename.endswith('.pdf'):
+            filepath = os.path.join("data", file.filename)
+            file.save(filepath)
+            pdf_paths.append(filepath)
+
+    if not pdf_paths:
+        return jsonify({'error': 'No PDF files uploaded'}), 400
+
+    # Process PDFs
+    all_text_parts = []
+    for file in pdf_paths:
+        extracted_text = get_text_from_pdf(file)
+        parts = split_text_into_chunks(extracted_text)
+        all_text_parts.extend(parts)
+
+    vector_index, _ = build_vector_index(all_text_parts)
+    text_chunks = all_text_parts
+    qa_system = DocumentQASystem(vector_index, text_chunks)
+
+    return jsonify({'message': 'Files uploaded and processed successfully!'})
+
+@app.route('/query', methods=['POST'])
+def query_system_endpoint():
+    global qa_system
+    if not qa_system:
+        return jsonify({'error': 'No documents have been processed yet.'}), 400
+
+    data = request.get_json()
+    if 'query' not in data:
+        return jsonify({'error': 'No query provided'}), 400
+
+    query = data['query']
+    answer = qa_system.get_answer(query)
+
+    return jsonify({'answer': answer})
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
