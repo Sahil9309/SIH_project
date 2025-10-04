@@ -1,22 +1,23 @@
 import { useState } from 'react';
 import axios from 'axios';
 
+// --- ICONS ---
 const SendIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-  </svg>
+    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
+    </svg>
 );
 
 const DocumentIcon = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-  </svg>
+    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
 );
 
 const CheckIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-  </svg>
+    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
 );
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
     }
 
     setIsUploading(true);
+    setIsReady(false);
     setMessages([]);
     try {
       const response = await axios.post('http://127.0.0.1:5000/upload', formData, {
@@ -54,7 +56,7 @@ function App() {
       setIsReady(true);
     } catch (error) {
       console.error('Error uploading files:', error);
-      alert('Error uploading files. See console for details.');
+      alert(error.response?.data?.error || 'Error uploading files. See console for details.');
       setIsReady(false);
     } finally {
       setIsUploading(false);
@@ -82,13 +84,11 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Subtle background pattern */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.05),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.05),transparent_50%)]"></div>
       
       <div className="relative min-h-screen flex flex-col items-center px-4 py-8 sm:px-6 lg:px-8">
         <div className="w-full max-w-5xl">
-          {/* Header */}
           <header className="mb-10 text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
               <DocumentIcon />
@@ -100,7 +100,6 @@ function App() {
           </header>
 
           <main className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Sidebar - Upload Section */}
             <div className="lg:col-span-2">
               <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-xl">
                 <div className="flex items-center gap-3 mb-5">
@@ -158,7 +157,7 @@ function App() {
                   </button>
 
                   {isReady && (
-                    <div className="flex items-center gap-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                    <div className="flex items-center gap-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl animate-in fade-in duration-500">
                       <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
                         <CheckIcon />
                       </div>
@@ -168,7 +167,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Info Card */}
               <div className="mt-6 bg-slate-800/30 backdrop-blur-sm border border-slate-700/30 rounded-xl p-5">
                 <h3 className="text-sm font-medium text-slate-300 mb-3">Supported Formats</h3>
                 <div className="flex flex-wrap gap-2">
@@ -181,10 +179,8 @@ function App() {
               </div>
             </div>
 
-            {/* Main Chat Area */}
             <div className="lg:col-span-3">
               <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl shadow-xl overflow-hidden flex flex-col h-[calc(100vh-16rem)]">
-                {/* Chat Header */}
                 <div className="border-b border-slate-700/50 p-5 bg-slate-800/70">
                   <h2 className="text-xl font-semibold text-white">Conversation</h2>
                   <p className="text-sm text-slate-400 mt-1">
@@ -192,13 +188,12 @@ function App() {
                   </p>
                 </div>
 
-                {/* Messages Area */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {messages.length === 0 && (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center">
                         <div className="w-20 h-20 rounded-full bg-slate-700/30 flex items-center justify-center mx-auto mb-4">
-                          <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                           <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                           </svg>
                         </div>
@@ -211,17 +206,14 @@ function App() {
                   
                   {messages.map((msg, index) => (
                     <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-                      <div className={`max-w-[85%] sm:max-w-md lg:max-w-lg ${msg.sender === 'user' ? 'order-1' : 'order-2'}`}>
+                       <div className={`max-w-[85%] sm:max-w-md lg:max-w-lg`}>
                         <div className={`px-4 py-3 rounded-2xl ${
                           msg.sender === 'user' 
-                            ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20' 
+                            ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white' 
                             : 'bg-slate-700/50 text-slate-100 border border-slate-600/30'
                         }`}>
                           <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                         </div>
-                        <p className={`text-xs text-slate-500 mt-1.5 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                          {msg.sender === 'user' ? 'You' : 'Assistant'}
-                        </p>
                       </div>
                     </div>
                   ))}
@@ -239,19 +231,16 @@ function App() {
                   )}
                 </div>
 
-                {/* Input Area */}
                 <div className="border-t border-slate-700/50 p-4 bg-slate-800/70">
-                  <form onSubmit={handleQuery} className="flex items-end gap-3">
-                    <div className="flex-1">
-                      <input
-                        type="text"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder={isReady ? "Type your question..." : "Upload documents first"}
-                        disabled={!isReady || isQuerying}
-                        className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                      />
-                    </div>
+                  <form onSubmit={handleQuery} className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder={isReady ? "Type your question..." : "Upload documents first"}
+                      disabled={!isReady || isQuerying}
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    />
                     <button
                       type="submit"
                       disabled={!isReady || isQuerying || !query.trim()}
